@@ -1,10 +1,14 @@
 import AgoraRTC from "agora-rtc-sdk-ng";
 
 let remoteContainer= document.getElementById("remote-container");
-let baseUrl = "https://api.agora.io/v1/apps";
-
-
+let baseUrl = "https://agora-meet-server.herokuapp.com/api";
+let baseUrl2 = "https://api.agora.io/v1/apps";
+let token = "";
+let sid = "";
+let rid="";
+var uid = "";
 function addVideoContainer(uid){
+    document.getElementById("rid").innerText = "SEDANG DITAMBAHKAN"+uid;
     let streamDiv=document.createElement("div"); // Create a new div for every stream
     streamDiv.id=uid;                       // Assigning id to div
     streamDiv.style.transform="rotateY(180deg)"; // Takes care of lateral inversion (mirror image)
@@ -20,7 +24,24 @@ function removeVideoContainer (uid) {
     remDiv && remDiv.parentNode.removeChild(remDiv);
 }
 
-
+async function getToken(channelName, uid){
+    let  mBody = JSON.stringify({
+        "channel_name":channelName,
+        "role":"client",
+        "token_type":"uid",
+        "uid":uid
+    });
+   let request = await fetch(`${baseUrl}/conference/rtc`, {
+        method: "post",
+        headers: {
+            "Content-Type": "application/json; charset=UTF-8",
+            "Accept": "application/json",
+        },
+        body: mBody
+    }).then((response) => response.json());
+    let result =JSON.parse(JSON.stringify(request));
+    return result.data.rtc_token;
+};
 
 document.getElementById("start").onclick = async function () {
    
@@ -30,11 +51,10 @@ document.getElementById("start").onclick = async function () {
     // Get credentials from the form
     let appId = document.getElementById("app-id").value;
     let channelId = document.getElementById("channel").value;
-    let token = document.getElementById("token").value || null;
-
+    token = await getToken(channelId,"0");
     // Create local tracks
     const [localAudioTrack, localVideoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
-    
+    document.getElementById("token").value = token;
     // Initialize the stop button
     initStop(client, localAudioTrack, localVideoTrack);
     
@@ -44,6 +64,8 @@ document.getElementById("start").onclick = async function () {
     // Set up event listeners for remote users publishing or unpublishing tracks
     client.on("user-published", async (user, mediaType) => {
         await client.subscribe(user, mediaType); // subscribe when a user publishes
+        document.getElementById("rid").innerText = "SEDANG DITAMBAHKAN"+user.uid;
+
         if (mediaType === "video") {
           addVideoContainer(String(user.uid)) // uses helper method to add a container for the videoTrack
           user.videoTrack.play(String(user.uid));
@@ -66,6 +88,8 @@ document.getElementById("start").onclick = async function () {
       }, 1000) 
     // Join a channnel and retrieve the uid for local user
     const _uid = await client.join(appId, channelId, token, null); 
+    document.getElementById("uid").value = _uid;
+    uid = _uid;
     await client.publish([localAudioTrack, localVideoTrack]);
 
 };
@@ -93,98 +117,47 @@ function initStop(client, localAudioTrack, localVideoTrack){
 document.getElementById("startRecording").onclick = async function () {
   
     let appId = document.getElementById("app-id").value;
-    let uid = document.getElementById("uid").value || null;
-	let channelId = document.getElementById("channel").value;
-    let url = `${baseUrl}/${appId}/cloud_recording/acquire`;
-    let clientID = "626e7c43150741a1884d3e050a43249c";
-    let clientSecret = "acbeeb2dc7494d228d7205bc9da68993";
-    let body = JSON.stringify({"cname":channelId,"uid":uid,"clientRequest":{}});
-    let token = document.getElementById("token").value || null;
-
-    document.getElementById("rid").innerText = body
-    var credentials = btoa(clientID+":"+clientSecret);
-    acquire = await fetch(`${baseUrl}/${appId}/cloud_recording/acquire`,{
-        method:"post",
-        headers:{
-            "Content-Type":"application/json; charset=UTF-8",
-            "Accept": "application/json",
-            "Authorization" : `Basic ${credentials}`
-        },
-        
-        body:body
-    }).then((response) => response.json());
-    result = JSON.parse(JSON.stringify(acquire));
-    rid= result.resourceId;
+    let channelId = document.getElementById("channel").value;
     callBody = JSON.stringify(
         {
-            "cname":channelId,
-            "uid":uid,
-            "clientRequest":{
-                "token": token, 
-                "recordingConfig":{
-                    "channelType":0,
-                    "streamTypes":2,
-                    "audioProfile":1,
-                    "videoStreamType":0,
-                    "maxIdleTime":120,
-                    "transcodingConfig":{
-                        "height": 640,
-                        "width": 360,
-                        "bitrate": 500,
-                        "fps": 15,
-                        "mixedVideoLayout":1
-                        }
-                    },
-                "storageConfig":{
-                    "vendor":6,
-                    "region":0,
-                    "bucket":"rnd-team",
-                    "accessKey":"GOOG4RJWXAMBEW27HU3E4A2K",
-                    "secretKey":"hdXArlSfeuMtp6d7Vu++TK4RLRL39rO8FmU3Pbwn"
-                }	
-            }
-        } 
+            "channel_name": channelId,
+            "uid": `${uid}`,
+            "rtc_token":token,
+            "mode": "mix"
+          }
         
     )
-	startcall = await fetch(`${baseUrl}/${appId}/cloud_recording/resourceid/${rid}/mode/mix/start`, {
-		method: "post",
-		headers: {
-			"Content-Type": "application/json; charset=UTF-8",
-			Accept: "application/json",
-           "Authorization" : `Basic ${credentials}`
-		},
-		body: callBody
-	}).then((response) => response.json());
-    result2 = JSON.parse(JSON.stringify(startcall));
-    sid = result2.sid;
-    document.getElementById("rid").innerHTML = sid;
-	initStopRecording(appId,rid,sid,credentials,body);
-	document.getElementById("startRecording").disabled = true;
+    startRecording = await fetch(`${baseUrl}/recording/start`, {
+        method: "post",
+        headers: {
+            "Content-Type": "application/json; charset=UTF-8",
+            Accept: "application/json"      },
+        body: callBody
+    }).then((response) => response.json());
+    result = JSON.parse(JSON.stringify(startRecording));
+    sid = result.data.s_id;
+    rid = result.data.resource_id;
+    document.getElementById("rid").innerHTML = "MEREKAM"+sid;
+    initStopRecording(callBody);
+    document.getElementById("startRecording").disabled = true;
 };
 
-function initStopRecording(appid,rid,sid,credentials,body) {
-	const stopBtn = document.getElementById("stopRecording");
-	stopBtn.disabled = false;
-	stopBtn.onclick = null;
-	stopBtn.onclick = async function () {
-		stopcall = await fetch(`${baseUrl}/${appid}/cloud_recording/resourceid/${rid}/sid/${sid}/mode/mix/stop`, {
-			method: "post",
-			headers: {
+function initStopRecording(body) {
+    const stopBtn = document.getElementById("stopRecording");
+    stopBtn.disabled = false;
+    stopBtn.onclick = null;
+    stopBtn.onclick = async function () {
+        stopcall = await fetch(`${baseUrl}/recording/stop`, {
+            method: "post",
+            headers: {
                 "Content-Type":"application/json; charset=UTF-8",
                 "Accept": "application/json",
-                "Authorization" : `Basic ${credentials}`
-			},
-			body: body,
-		}).then((response) => response.json());
-		stopBtn.disabled = true;
-		document.getElementById("startRecording").disabled = false;
-	};
+            },
+            body: body,
+        }).then((response) => response.json());
+        stopBtn.disabled = true;
+    document.getElementById("rid").innerHTML = "BERHENTI";
+        document.getElementById("startRecording").disabled = false;
+    };
 }
 
-function openForm() {
-    document.getElementById("myForm").style.display = "block";
-  }
-  
-  function closeForm() {
-    document.getElementById("myForm").style.display = "none";
-  }

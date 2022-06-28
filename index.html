@@ -1,51 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <title>Qiscus Meet Web Sample</title>
-        <!--
-        This line is used to refer to the bundle.js file packaged by webpack. A sample webpack configuration is shown in the later step of running your app.
-        -->
-        <script src="./dist/bundle.js"></script>
-    </head>
-    <body>
-        <div class="form-popup" id="myForm">
-            <form  class="form-container">
-              <h1>Login</h1>
-          
-              <label for="email"><b>Email</b></label>
-              <input type="text" placeholder="Enter Email" name="email" required>
-          
-              <label for="psw"><b>Password</b></label>
-              <input type="password" placeholder="Enter Password" name="psw" required>
-          
-              <button type="submit" class="btn">Login</button>
-              <button type="button" class="btn cancel" onclick="closeForm()">Close</button>
-            </form>
-          </div>
-        <h1>
-            Video Call Demo<br><small style="font-size: 14pt">Qiscus Meet x Agora</small>
-        </h1>
-    
-        <p>App id : <input type="text" id="app-id" value="54b225f6fe734649bb0ab02ecc01c57e"></p>
-        <p>Channel : <input type="text" id="channel" value="Gustu"></p>
-        <p>UID : <input type="text" id="uid" value="123"></p>
-        <p>Token : <input type="text" id="token" placeholder="(optional)" value=""></p>
-        <button id="start">Start</button>
-        <button id="stop" disabled>Stop</button>
-        <button id="startRecording" disabled=true>Start Recording</button>
-        <button id="stopRecording" disabled=true>Stop Recording</button>
-        <p id="rid">P</p>
-        <p id="timer">Timer :</p>
-        <h4>My Feed :</h4>
-        <div id="me"></div>
-    
-        <h4>Remote Feeds :</h4>
-        <div id="remote-container">
-    
-        </div>
-    
-        <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.3.0.js"></script>
-        <script src="scripts/script.js"></script>
-    </body>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Video Call Demo</title>
+    <link rel="stylesheet" href="./styles/style.css">
+    <script src="./dist/bundle.js"></script>
+</head>
+
+<body>
+    <h1>
+        Video Call Demo<br><small style="font-size: 14pt">Powered by Agora.io</small>
+    </h1>
+
+    <p>App id : <input type="text" id="app-id" value="1c5fd7bfa94f447ca1df0380be9c1320"></p>
+    <p>Channel : <input type="text" id="channel" value="Gustu"></p>
+    <p>Token : <input type="text" id="token" placeholder="(optional)" value=""></p>
+    <p>UID : <input type="text" id="uid" value="0"></p>
+    <button id="start">Start</button>
+    <button id="stop" disabled>Stop</button>
+    <button id="startRecording">Start Recording</button>
+    <button id="stopRecording">Stop Recording</button>
+    <p id="rid"></p>
+    <p id="timer"></p>
+    <h4>My Feed :</h4>
+    <div id="me"></div>
+
+    <h4>Remote Feeds :</h4>
+    <div id="remote-container">
+
+    </div>
+
+    <!-- <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.3.0.js"></script> -->
+    <!-- <script src="scripts/script.js"></script> -->
+    <script src="./dist/bundle.js"></script>
+
+</body>
+
 </html>
